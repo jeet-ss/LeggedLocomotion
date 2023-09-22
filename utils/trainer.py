@@ -27,7 +27,8 @@ class Trainer:
                 name_variant = '',          # string for differenctiating experiments
                 ):
         #
-        self.writer = SummaryWriter(log_dir='./logs')
+        log_dir = './l_'+name_variant
+        self.writer = SummaryWriter(log_dir=log_dir)
         #
         self._model = model_no.type(dtype)
         self._optim = optimizer
@@ -61,6 +62,7 @@ class Trainer:
         # foward pass
         pred = self._model(feats)
         loss = self._crit(pred, labels)
+        loss = torch.mean(loss)
         # backward pass
         loss.backward()
         self._optim.step()
@@ -81,7 +83,7 @@ class Trainer:
             ankle_j = ankle_j.type(dtype).unsqueeze(1)
             joint_moment = joint_moment.type(dtype).unsqueeze(1)
             #
-            loss = self.train_step(torch.hstack((trunk_j, hip_j, knee_j, ankle_j)), joint_moment, idx)
+            loss = self.train_step(torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j)).unsqueeze(2), joint_moment, idx)
             batch_loss += loss
         avg_loss = batch_loss/self.train_batches.__len__()
         return avg_loss
@@ -91,8 +93,8 @@ class Trainer:
         pred = self._model(feats)
         #
         loss = self._crit(pred, labels)
-
-        return loss.detach().item(), pred.detach()
+        loss_mean = torch.mean(loss)
+        return loss_mean.detach().item(), pred.detach(), loss.detach()
 
     def val_epoch(self, batches, mode='val'):
         # eval mode
@@ -101,6 +103,7 @@ class Trainer:
         loss_batch = 0
         batch_pred = torch.empty(0)
         batch_labels = torch.empty(0)
+        batch_loss = torch.empty(0)
         with torch.no_grad():
             for idx, batches in enumerate(batches):
                 #
@@ -112,12 +115,14 @@ class Trainer:
                 ankle_j = ankle_j.type(dtype).unsqueeze(1)
                 joint_moment = joint_moment.type(dtype).unsqueeze(1)
 
-                loss, pred = self.val_step(torch.hstack((trunk_j, hip_j, knee_j, ankle_j)), joint_moment)
+                loss, pred, loss_t = self.val_step(torch.hstack((ground_reac, trunk_j,  hip_j, knee_j, ankle_j)).unsqueeze(2), joint_moment)
                 loss_batch += loss
                 #
                 batch_pred = torch.cat((batch_pred, pred.cpu()))
+                batch_labels = torch.cat((batch_labels, joint_moment.squeeze().cpu()))
+                batch_loss = torch.cat((batch_loss, loss_t.cpu()))
         avg_loss = loss_batch/self.val_batches.__len__()
-        return avg_loss
+        return avg_loss, batch_pred, batch_labels, batch_loss
 
     def fit(self, epochs_start=1, epochs_end=0):
         epochs = epochs_end - epochs_start
@@ -128,21 +133,29 @@ class Trainer:
         test_loss = 0
         min_loss = np.Inf
         criteria_counter = 0
+        preds = np.array([])
+        labels = np.array([])
+        errors = np.array([])
         #
         #while (True):
-        for i in tqdm.trange(epochs_start, epochs_end):
+        for i in range(epochs_start, epochs_end):
             # stop by epoch number
             # if epoch_counter >= epochs:
             #     break
             # increment Counter
             #epoch_counter += 1
             train_loss = self.train_epoch()
-            val_loss = self.val_epoch(self.val_batches)
+            val_loss, pred, label, errors_B  = self.val_epoch(self.val_batches)
+
             #
             loss_train = np.append(loss_train, train_loss)
             loss_val = np.append(loss_val, val_loss)
+            preds = np.append(preds, pred)
+            labels = np.append(labels, label)
+            errors = np.append(errors, errors_B)
             #logging
-            print(f'at epoch {i}, trainLoss:{train_loss}, valLoss:{val_loss}')
+            if i%2 == 0:
+                print(f'at epoch {i}, trainLoss:{train_loss:.2f}, valLoss:{val_loss:.2f}')
             self.writer.add_scalar(tag="train_loss", scalar_value=train_loss, global_step=i)
             self.writer.add_scalar("val_loss", val_loss, i)
             # save model if better
@@ -168,4 +181,7 @@ class Trainer:
             "test_loss" : test_loss,
             "val_loss" : loss_val,
             "min_loss" : min_loss,
+            "preds" : preds,
+            "labels" : labels,
+            "errors" : errors,
         }
