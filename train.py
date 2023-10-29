@@ -19,7 +19,7 @@ def train(args):
     lr = 0.001   # 0.001
     batch_size = 50
     epochStart = 0
-    epochEnd = 21
+    epochEnd = 5
     retrain_model_epoch = 100
     name_variant = 'lstm'
 
@@ -76,7 +76,10 @@ def train(args):
         }
     )
     # save loss
-    np.save(name_variant+'_'+str(epochStart)+'_'+str(epochEnd)+'_data.npy', loss)
+    root_path = os.path.join(os.path.abspath(os.getcwd()), 'results')
+    os.makedirs(root_path, exist_ok=True )
+    file_name = name_variant+'_'+str(epochStart)+'_'+str(epochEnd)+'_data.npy'
+    np.save(os.path.join(root_path, file_name), loss)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Training of legged Locomotion')
