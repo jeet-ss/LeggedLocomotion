@@ -81,9 +81,15 @@ class Trainer:
             hip_j = hip_j.type(dtype).unsqueeze(1)
             knee_j = knee_j.type(dtype).unsqueeze(1)
             ankle_j = ankle_j.type(dtype).unsqueeze(1)
-            joint_moment = joint_moment.type(dtype).unsqueeze(1)
             #
-            loss = self.train_step(torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j)).unsqueeze(2), joint_moment, idx)
+            # inp and label for singe time data
+            #inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j)).unsqueeze(2)
+            #joint_moment = joint_moment.type(dtype).unsqueeze(1)
+            # inp for time sequence data
+            inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j))#.unsqueeze(2)
+            joint_moment = joint_moment.type(dtype)#.unsqueeze(1)
+            #print("in trian", inp.size(), ground_reac.size())
+            loss = self.train_step(inp, joint_moment, idx)
             batch_loss += loss
         avg_loss = batch_loss/self.train_batches.__len__()
         return avg_loss
@@ -104,6 +110,7 @@ class Trainer:
         batch_pred = torch.empty(0)
         batch_labels = torch.empty(0)
         batch_loss = torch.empty(0)
+        counter = 0
         with torch.no_grad():
             for idx, batches in enumerate(batches):
                 #
@@ -113,14 +120,23 @@ class Trainer:
                 hip_j = hip_j.type(dtype).unsqueeze(1)
                 knee_j = knee_j.type(dtype).unsqueeze(1)
                 ankle_j = ankle_j.type(dtype).unsqueeze(1)
-                joint_moment = joint_moment.type(dtype).unsqueeze(1)
 
-                loss, pred, loss_t = self.val_step(torch.hstack((ground_reac, trunk_j,  hip_j, knee_j, ankle_j)).unsqueeze(2), joint_moment)
+                ### inp and label for singe time data
+                #inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j)).unsqueeze(2)
+                #joint_moment = joint_moment.type(dtype).unsqueeze(1)
+
+                ### inp and label for time sequence data
+                inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j))#.unsqueeze(2)
+                joint_moment = joint_moment.type(dtype)#.unsqueeze(1)
+                
+                loss, pred, loss_t = self.val_step(inp, joint_moment)
                 loss_batch += loss
+                #print("in val", inp.size(), ground_reac.size(), loss_t.size() )
                 #
                 batch_pred = torch.cat((batch_pred, pred.cpu()))
                 batch_labels = torch.cat((batch_labels, joint_moment.squeeze().cpu()))
                 batch_loss = torch.cat((batch_loss, loss_t.cpu()))
+                #print("in val2: ", batch_pred.size(), batch_loss.size(), counter)
         avg_loss = loss_batch/self.val_batches.__len__()
         return avg_loss, batch_pred, batch_labels, batch_loss
 
@@ -139,11 +155,7 @@ class Trainer:
         #
         #while (True):
         for i in range(epochs_start, epochs_end):
-            # stop by epoch number
-            # if epoch_counter >= epochs:
-            #     break
-            # increment Counter
-            #epoch_counter += 1
+
             train_loss = self.train_epoch()
             val_loss, pred, label, errors_B  = self.val_epoch(self.val_batches)
 
@@ -173,15 +185,18 @@ class Trainer:
                 break
         
         # run test batch
-        #test_loss = self.val_epoch(self.test_batches, mode='test')
+        test_loss, test_pred, test_label, test_errors_B = self.val_epoch(self.test_batches, mode='test')
 
             
         return  {
             "train_loss" : loss_train,
             "test_loss" : test_loss,
+            "test_pred" : test_pred.squeeze().numpy(),
+            "test_label" : test_label.numpy(),
+            "test_errors" : test_errors_B.squeeze().numpy(),
             "val_loss" : loss_val,
             "min_loss" : min_loss,
-            "preds" : preds,
-            "labels" : labels,
-            "errors" : errors,
+            "val_preds" : preds,
+            "val_labels" : labels,
+            "val_errors" : errors,
         }

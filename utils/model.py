@@ -66,18 +66,68 @@ class Conv_block(nn.Module):
         
     def forward(self, input_1D):
         return self.seq(input_1D)
-
-class CNN_time(nn.Module):
-    def __init__(self, input_size, channels=[32,64,128,256],  kernel_size=3, dropout=0.2):
+    
+class CNN_dense(nn.Module):
+    def __init__(self, input_size, channels=[32,64,],  kernel_size=3, dropout=0.2):
         super().__init__()
-
+        """
+            Input size = No of channels / no of Input features used
+        """
         self.c1 = Conv_block(input_size, channels[0], kernel_size=1)
         self.c2 = Conv_block(channels[0], channels[1], kernel_size=1)
-        self.c3 = Conv_block(channels[1], channels[2], kernel_size=3)
-        self.c4 = Conv_block(channels[2], channels[3], kernel_size=2)
+        self.seq = nn.Sequential(
+                    nn.Linear(64,32), nn.ReLU(),
+                    nn.Linear(32,8), nn.ReLU(),
+                    nn.Linear(8,1)
+
+        )
+    def forward(self, inp):
+        batch_size = inp.size()[0]
+        inp = self.c1(inp)
+        inp = self.c2(inp)
+        inp = inp.reshape(batch_size, -1)
+        inp = self.seq(inp)
+        
+        return inp
+
+
+class CNN_time(nn.Module):
+    def __init__(self, input_size, channels=[32,64],  kernel_size=3, dropout=0.2):
+        super().__init__()
+
+        self.c1 = Conv_block(input_size, channels[0], kernel_size=3)
+        self.c2 = Conv_block(channels[0], channels[1], kernel_size=3)
         self.mp = nn.MaxPool1d(kernel_size=2)
         self.seq = nn.Sequential(
-                    #nn.Linear(256,64), nn.ReLU(),
+                    nn.Linear(64,32), nn.ReLU(),
+                    nn.Linear(32,8), nn.ReLU(),
+                    nn.Linear(8,1)
+
+        )
+    def forward(self, inp):
+        inp = self.mp(self.c1(inp))
+        #
+        #print("for1:", inp.size())
+        inp = self.mp(self.c2(inp))
+        #print("for2:", inp.size())
+       
+        inp = self.seq(inp.reshape(inp.size()[0], -1))
+        #print("for3:" , inp.size())
+
+        return inp
+
+class CNN_time_2(nn.Module):
+    '''
+        this model has no maxpool
+    '''
+    def __init__(self, input_size, channels=[16,32,64],  kernel_size=3, dropout=0.2):
+        super().__init__()
+
+        self.c1 = Conv_block(input_size, channels[0], kernel_size=5)
+        self.c2 = Conv_block(channels[0], channels[1], kernel_size=3)
+        self.c3 = Conv_block(channels[1], channels[2], kernel_size=3)
+        #self.mp = nn.MaxPool1d(kernel_size=2)
+        self.seq = nn.Sequential(
                     nn.Linear(64,32), nn.ReLU(),
                     nn.Linear(32,8), nn.ReLU(),
                     nn.Linear(8,1)
@@ -86,16 +136,12 @@ class CNN_time(nn.Module):
     def forward(self, inp):
         inp = self.c1(inp)
         #
-        #print("for:", inp.size())
+        #print("for1:", inp.size())
         inp = self.c2(inp)
-        #print("for:", inp.size())
-        #inp = self.c3(inp)
-
-        #inp = self.mp(inp)
-        #inp = self.c4(inp)
-
-        #inp = self.mp(inp)
-        #print("for:", inp.size())
+        #print("for2:", inp.size())
+        inp = self.c3(inp)
+        #print("for3:", inp.size())
         inp = self.seq(inp.reshape(inp.size()[0], -1))
+        #print("for4:" , inp.size())
 
         return inp
