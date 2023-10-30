@@ -20,7 +20,6 @@ def train(args):
     batch_size = 50
     epochStart = 0
     epochEnd = 5
-    retrain_model_epoch = 100
     name_variant = 'lstm'
 
     # load data
@@ -72,7 +71,7 @@ def train(args):
     loss = trainer.fit(epochs_start=epochStart, epochs_end=epochEnd)
     loss.update(
         {
-            "params" : "FC model,  5-16-32-16-1, Adam, lr=0.001, b=64, Huber loss"
+            "params" : "LSTM model, Adam, lr=0.001, b=64, Huber loss"
         }
     )
     # save loss
@@ -81,9 +80,15 @@ def train(args):
     file_name = name_variant+'_'+str(epochStart)+'_'+str(epochEnd)+'_data.npy'
     np.save(os.path.join(root_path, file_name), loss)
 
+    # for testing
+    retrain_model_epoch = 100
+    #t_loss = trainer.test_model(epoch_num = retrain_model_epoch)
+    #t_file_name = name_variant+retrain_model_epoch+'_testData.npy'
+    #np.save(os.path.join(root_path, t_file_name), t_loss)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Training of legged Locomotion')
-    parser.add_argument('--fp', '-filepath', type=str, default="./rirData/ism_100.npy", help='file path of data')
+    parser.add_argument('--fp', '-filepath', type=str, default="Data_Ankle.mat", help='file path of data')
     args = parser.parse_args()
 
     train(args)

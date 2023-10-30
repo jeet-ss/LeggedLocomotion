@@ -141,6 +141,22 @@ class Trainer:
         avg_loss = loss_batch/self.val_batches.__len__()
         return avg_loss, batch_pred, batch_labels, batch_loss
 
+    def test_model(self, epoch_num):
+        '''
+        epoch number is checkpoint number to load mmodel
+        '''
+        # restore checkpoint
+        self.restore_checkpoint(epoch)
+        # test 
+        test_loss, test_pred, test_label, test_errors_B = self.val_epoch(self.test_batches, mode='test')
+
+        return  {
+            "test_loss" : test_loss,
+            "test_pred" : test_pred.squeeze().numpy(),
+            "test_label" : test_label.numpy(),
+            "test_errors" : test_errors_B.squeeze().numpy(),
+        }
+        
     def fit(self, epochs_start=1, epochs_end=0):
         epochs = epochs_end - epochs_start
         assert epochs > 0, 'Epochs > 0'
