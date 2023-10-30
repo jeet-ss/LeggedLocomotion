@@ -37,6 +37,7 @@ class Trainer:
         self.val_batches = val_loader
         self.test_batches = test_loader
         self._early_stopping_patience = early_stopping_patience
+        self.model_path = name_variant+'_checkpoints'
 
     def save_checkpoint(self, epoch):
         # create path
@@ -175,7 +176,7 @@ class Trainer:
                 criteria_counter = 0
                 min_loss = train_loss
                 # save checkpoint
-                #self.save_checkpoint(i)
+                self.save_checkpoint(i)
             
             else:
                 criteria_counter += 1            
