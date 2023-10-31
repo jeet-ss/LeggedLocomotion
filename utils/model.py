@@ -30,9 +30,9 @@ class LSTM(nn.Module):
         # LSTM model
         self.lstm = nn.LSTM(input_size=input_size, hidden_size=hidden_size,
                             num_layers=num_layers, batch_first=True, dropout=dropout) # lstm
-        self.fc_1 =  nn.Linear(hidden_size, 256) # fully connected 
-        self.fc3 = nn.Linear(256,32)
-        self.fc_2 = nn.Linear(32, num_classes) # fully connected last layer
+        self.fc_1 =  nn.Linear(hidden_size, 32) # fully connected 
+        self.fc3 = nn.Linear(32,8)
+        self.fc_2 = nn.Linear(8, num_classes) # fully connected last layer
         self.relu = nn.ReLU()
         
     def forward(self,x):
