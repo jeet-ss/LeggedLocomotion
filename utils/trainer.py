@@ -146,7 +146,7 @@ class Trainer:
         epoch number is checkpoint number to load mmodel
         '''
         # restore checkpoint
-        self.restore_checkpoint(epoch)
+        self.restore_checkpoint(epoch_num)
         # test 
         test_loss, test_pred, test_label, test_errors_B = self.val_epoch(self.test_batches, mode='test')
 
@@ -156,7 +156,7 @@ class Trainer:
             "test_label" : test_label.numpy(),
             "test_errors" : test_errors_B.squeeze().numpy(),
         }
-        
+
     def fit(self, epochs_start=1, epochs_end=0):
         epochs = epochs_end - epochs_start
         assert epochs > 0, 'Epochs > 0'

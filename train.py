@@ -10,7 +10,7 @@ from sklearn.preprocessing import scale
 from torch.utils.data import DataLoader
 from utils.datasetLoader import LeggedMotion_dataset, LeggedMotion_seq_dataset
 from utils.trainer import Trainer
-from utils.model import FC_model, LSTM, CNN_time, CNN_dense, CNN_time_2
+from utils.model import FC_model, LSTM, CNN_time, CNN_dense, CNN_time_2, RNNModel
 from utils.helpers import split_sequences
 
 
@@ -19,8 +19,8 @@ def train(args):
     lr = 0.001   # 0.001
     batch_size = 50
     epochStart = 0
-    epochEnd = 5
-    name_variant = 'lstm'
+    epochEnd = 400
+    name_variant = 'rnn2'
 
     # load data
     mat = scipy.io.loadmat('Data_Ankle.mat')
@@ -56,22 +56,26 @@ def train(args):
     val_batches = DataLoader(LeggedMotion_seq_dataset(data=val_d, labels=val_l), batch_size=batch_size)
     print(f"batches: train-{len(train_batches)}, val-{len(val_batches)}, test-{len(test_batches)}")
 
-    # model , optim, loss function
+    # model 
     #model = FC_model()
     #model = CNN_dense(input_size=5)
-    model = LSTM(num_classes=1, input_size=9, hidden_size=512, num_layers=1, dropout=0)
+    #model = LSTM(num_classes=1, input_size=9, hidden_size=64, num_layers=1, dropout=0)
+    model = RNNModel(num_classes=1, input_size=9, hidden_size=64, num_layers=1, dropout=0)
     #model = CNN_time(input_size=5)  # bad performance
     #model = CNN_time_2(input_size=5)
+
+    # , optim, loss function
     optim = torch.optim.Adam(model.parameters(), lr=lr)
     #loss = torch.nn.MSELoss(reduction='none')
     #loss = torch.nn.L1Loss(reduction="none")
     loss = torch.nn.HuberLoss(reduction="none", delta=1)
+    
     # load trainer 
     trainer = Trainer(model, lr, optim, loss, train_batches, val_batches, test_batches, name_variant=name_variant)
     loss = trainer.fit(epochs_start=epochStart, epochs_end=epochEnd)
     loss.update(
         {
-            "params" : "LSTM model, Adam, lr=0.001, b=64, Huber loss"
+            "params" : "RNN model, Adam, lr=0.001, b=50, Huber loss"
         }
     )
     # save loss
@@ -81,10 +85,10 @@ def train(args):
     np.save(os.path.join(root_path, file_name), loss)
 
     # for testing
-    retrain_model_epoch = 100
-    #t_loss = trainer.test_model(epoch_num = retrain_model_epoch)
-    #t_file_name = name_variant+retrain_model_epoch+'_testData.npy'
-    #np.save(os.path.join(root_path, t_file_name), t_loss)
+    # retrain_model_epoch = 132
+    # t_loss = trainer.test_model(epoch_num = retrain_model_epoch)
+    # t_file_name = name_variant+'_'+str(retrain_model_epoch)+'_testData.npy'
+    # np.save(os.path.join(root_path, t_file_name), t_loss)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Training of legged Locomotion')

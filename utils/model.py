@@ -19,6 +19,40 @@ class FC_model(nn.Module):
     def forward(self, inp):
         return self.fc(inp.squeeze())
 
+class RNNModel(nn.Module):
+    def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout=0.2):
+        super().__init__()
+        self.num_classes = num_classes # output size
+        self.num_layers = num_layers # number of recurrent layers in the lstm
+        self.input_size = input_size # input size
+        self.hidden_size = hidden_size # neurons in each lstm layer
+
+        self.rnn = nn.RNN(input_size=input_size, hidden_size=hidden_size,
+                            num_layers=num_layers, batch_first=True, dropout=dropout)
+        self.fc_1 =  nn.Linear(hidden_size, 32) # fully connected 
+        self.fc3 = nn.Linear(32,8)
+        self.fc_2 = nn.Linear(8, num_classes) # fully connected last layer
+        self.relu = nn.ReLU()
+
+    def forward(self,x):
+        # hidden state
+        h_0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).cuda()
+        # cell state
+        #c_0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).cuda()
+        # propagate input through LSTM
+        output, hn = self.rnn(x, h_0) # (input, hidden, and internal state)
+        #print('before:', hn.size())
+        hn = hn.view(-1, self.hidden_size) # reshaping the data for Dense layer next
+        #print('after:', hn.size())
+        out = self.relu(hn)
+        out = self.fc_1(out) # first dense
+        out = self.relu(out) # relu
+        out = self.fc3(out) # second dense
+        out = self.relu(out)
+        out = self.fc_2(out) # final output
+        return out
+
+
 class LSTM(nn.Module):
     
     def __init__(self, num_classes, input_size, hidden_size, num_layers, dropout=0.2):
@@ -48,7 +82,7 @@ class LSTM(nn.Module):
         out = self.relu(hn)
         out = self.fc_1(out) # first dense
         out = self.relu(out) # relu
-        out = self.fc3(out) # first dense
+        out = self.fc3(out) # second dense
         out = self.relu(out)
         out = self.fc_2(out) # final output
         return out
