@@ -19,8 +19,8 @@ def train(args):
     lr = 0.001   # 0.001
     batch_size = 50
     epochStart = 0
-    epochEnd = 400
-    name_variant = 'rnn2'
+    epochEnd = 500
+    name_variant = 'lstm2'
 
     # load data
     mat = scipy.io.loadmat('Data_Ankle.mat')
@@ -57,10 +57,10 @@ def train(args):
     print(f"batches: train-{len(train_batches)}, val-{len(val_batches)}, test-{len(test_batches)}")
 
     # model 
-    #model = FC_model()
+    #model = FC_model(input_size=3)
     #model = CNN_dense(input_size=5)
-    #model = LSTM(num_classes=1, input_size=9, hidden_size=64, num_layers=1, dropout=0)
-    model = RNNModel(num_classes=1, input_size=9, hidden_size=64, num_layers=1, dropout=0)
+    model = LSTM(num_classes=1, input_size=5, hidden_size=128, num_layers=1, dropout=0)
+    #model = RNNModel(num_classes=1, input_size=5, hidden_size=64, num_layers=1, dropout=0)
     #model = CNN_time(input_size=5)  # bad performance
     #model = CNN_time_2(input_size=5)
 
@@ -75,11 +75,11 @@ def train(args):
     loss = trainer.fit(epochs_start=epochStart, epochs_end=epochEnd)
     loss.update(
         {
-            "params" : "RNN model, Adam, lr=0.001, b=50, Huber loss"
+            "params" : "lstm model, 128 hidden units, Adam, lr=0.001, b=50, huber loss"
         }
     )
     # save loss
-    root_path = os.path.join(os.path.abspath(os.getcwd()), 'results')
+    root_path = os.path.join(os.path.abspath(os.getcwd()), 'results_time')
     os.makedirs(root_path, exist_ok=True )
     file_name = name_variant+'_'+str(epochStart)+'_'+str(epochEnd)+'_data.npy'
     np.save(os.path.join(root_path, file_name), loss)

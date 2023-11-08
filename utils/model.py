@@ -6,11 +6,11 @@ class FC_model(nn.Module):
     """
         This model estimates 1 joint moment
     """
-    def __init__(self):
+    def __init__(self, input_size=5):
         super().__init__()
         # define layers
         self.fc = nn.Sequential(
-                        nn.Linear(5, 16), nn.ReLU(),       #6
+                        nn.Linear(input_size, 16), nn.ReLU(),       #6
                         nn.Linear(16, 32), nn.ReLU(),    
                         nn.Linear(32, 16), nn.ReLU(),        #8
                         nn.Linear(16, 1)                     #9

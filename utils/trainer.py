@@ -84,12 +84,14 @@ class Trainer:
             ankle_j = ankle_j.type(dtype).unsqueeze(1)
             #
             # inp and label for singe time data
-            #inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j)).unsqueeze(2)
-            #joint_moment = joint_moment.type(dtype).unsqueeze(1)
+            # inp = torch.hstack((ground_reac, trunk_j, knee_j )).unsqueeze(2)
+            # joint_moment = joint_moment.type(dtype).unsqueeze(1)
             # inp for time sequence data
             inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j))#.unsqueeze(2)
             joint_moment = joint_moment.type(dtype)#.unsqueeze(1)
-            #print("in trian", inp.size(), ground_reac.size())
+            # for lstms extra dimension change
+            inp = torch.swapaxes(inp, 1, 2)
+
             loss = self.train_step(inp, joint_moment, idx)
             batch_loss += loss
         avg_loss = batch_loss/self.train_batches.__len__()
@@ -123,12 +125,14 @@ class Trainer:
                 ankle_j = ankle_j.type(dtype).unsqueeze(1)
 
                 ### inp and label for singe time data
-                #inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j)).unsqueeze(2)
-                #joint_moment = joint_moment.type(dtype).unsqueeze(1)
+                # inp = torch.hstack((ground_reac, trunk_j, knee_j )).unsqueeze(2)
+                # joint_moment = joint_moment.type(dtype).unsqueeze(1)
 
                 ### inp and label for time sequence data
                 inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j))#.unsqueeze(2)
                 joint_moment = joint_moment.type(dtype)#.unsqueeze(1)
+                # for lstms extra dimension change
+                inp = torch.swapaxes(inp, 1, 2)
                 
                 loss, pred, loss_t = self.val_step(inp, joint_moment)
                 loss_batch += loss
