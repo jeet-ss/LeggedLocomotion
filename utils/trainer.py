@@ -83,13 +83,15 @@ class Trainer:
             knee_j = knee_j.type(dtype).unsqueeze(1)
             ankle_j = ankle_j.type(dtype).unsqueeze(1)
             #
-            # inp and label for singe time data
-            # inp = torch.hstack((ground_reac, trunk_j, knee_j )).unsqueeze(2)
+            ### inp and label for singe time data
+            # inp = torch.hstack((trunk_j, hip_j, knee_j, ankle_j )).unsqueeze(2)
             # joint_moment = joint_moment.type(dtype).unsqueeze(1)
-            # inp for time sequence data
-            inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j))#.unsqueeze(2)
+
+
+            ### inp for time sequence data (CNN + LSTM/RNN)
+            inp = torch.hstack(( ground_reac, trunk_j, knee_j))#.unsqueeze(2)
             joint_moment = joint_moment.type(dtype)#.unsqueeze(1)
-            # for lstms extra dimension change
+            ### for LSTM/RNN extra dimension change
             inp = torch.swapaxes(inp, 1, 2)
 
             loss = self.train_step(inp, joint_moment, idx)
@@ -125,13 +127,13 @@ class Trainer:
                 ankle_j = ankle_j.type(dtype).unsqueeze(1)
 
                 ### inp and label for singe time data
-                # inp = torch.hstack((ground_reac, trunk_j, knee_j )).unsqueeze(2)
+                # inp = torch.hstack((trunk_j,hip_j, knee_j, ankle_j )).unsqueeze(2)
                 # joint_moment = joint_moment.type(dtype).unsqueeze(1)
 
-                ### inp and label for time sequence data
-                inp = torch.hstack((ground_reac, trunk_j,hip_j, knee_j, ankle_j))#.unsqueeze(2)
+                ### inp and label for time sequence data (CNN + LSTM/RNN)
+                inp = torch.hstack(( ground_reac, trunk_j, knee_j ))#.unsqueeze(2)
                 joint_moment = joint_moment.type(dtype)#.unsqueeze(1)
-                # for lstms extra dimension change
+                ### for LSTM/RNN extra dimension swap
                 inp = torch.swapaxes(inp, 1, 2)
                 
                 loss, pred, loss_t = self.val_step(inp, joint_moment)
@@ -176,11 +178,11 @@ class Trainer:
         #
         #while (True):
         for i in range(epochs_start, epochs_end):
-
+            # iterate for an Epoch
             train_loss = self.train_epoch()
             val_loss, pred, label, errors_B  = self.val_epoch(self.val_batches)
 
-            #
+            # store 
             loss_train = np.append(loss_train, train_loss)
             loss_val = np.append(loss_val, val_loss)
             preds = np.append(preds, pred)

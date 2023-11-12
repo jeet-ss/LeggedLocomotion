@@ -4,4 +4,3 @@ events.out.tfevents*
 *.yaml
 *.npy
 *.pyc
-*.mat

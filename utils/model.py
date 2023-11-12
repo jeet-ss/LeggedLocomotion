@@ -125,32 +125,8 @@ class CNN_dense(nn.Module):
         return inp
 
 
+
 class CNN_time(nn.Module):
-    def __init__(self, input_size, channels=[32,64],  kernel_size=3, dropout=0.2):
-        super().__init__()
-
-        self.c1 = Conv_block(input_size, channels[0], kernel_size=3)
-        self.c2 = Conv_block(channels[0], channels[1], kernel_size=3)
-        self.mp = nn.MaxPool1d(kernel_size=2)
-        self.seq = nn.Sequential(
-                    nn.Linear(64,32), nn.ReLU(),
-                    nn.Linear(32,8), nn.ReLU(),
-                    nn.Linear(8,1)
-
-        )
-    def forward(self, inp):
-        inp = self.mp(self.c1(inp))
-        #
-        #print("for1:", inp.size())
-        inp = self.mp(self.c2(inp))
-        #print("for2:", inp.size())
-       
-        inp = self.seq(inp.reshape(inp.size()[0], -1))
-        #print("for3:" , inp.size())
-
-        return inp
-
-class CNN_time_2(nn.Module):
     '''
         this model has no maxpool
     '''
